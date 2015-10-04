@@ -15,8 +15,7 @@ Quick script to setup an obfuscated tor bridge
     * Note: You can always check the syntax of a bash script using `bash -n`
 
 
-  ####Examples
- <code>
+  ####Examples<code>
      * VERSION=jessie
      * PREFIX=0000
      * ALLOWUSERS="AllowUsers root@*.*.*.*"
