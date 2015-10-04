@@ -14,10 +14,8 @@ Quick script to setup an obfuscated tor bridge
    * SSH_PUB_KEY: Add your pub key here
     * Note: You can always check the syntax of a bash script using `bash -n`
 
-
-  ####Examples<code>
+  ####Examples
      * VERSION=jessie
      * PREFIX=0000
      * ALLOWUSERS="AllowUsers root@*.*.*.*"
-     * SSH_PUB_KEY="ssh-rsa ..."</code>
-
+     * SSH_PUB_KEY="ssh-rsa ..."
