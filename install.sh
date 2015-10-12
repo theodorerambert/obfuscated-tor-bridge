@@ -59,10 +59,10 @@ server_install_tor_packages() {
 	echo "##################################################"
 	echo "Add Tor repository"
 
-	{
-		echo "deb https://deb.torproject.org/torproject.org $VERSION main"
-		echo "deb https://deb.torproject.org/torproject.org obfs4proxy main"
-	} >> /etc/apt/sources.list
+	cat >> /etc/apt/sources.list << EOF
+    deb https://deb.torproject.org/torproject.org $VERSION main
+    deb https://deb.torproject.org/torproject.org obfs4proxy main
+EOF
 
 	echo "##################################################"
 	echo "Retrieve Tor GPG Keys & Install Tor"
@@ -82,17 +82,18 @@ server_install_tor_packages() {
 
 	cp -a /etc/tor/torrc /etc/tor/torrc.orig
 
-	{
-		echo "SocksPort 0"
-		echo "ORPort 443"
-		echo "BridgeRelay 1"
-		echo "Exitpolicy reject *:*"
-		echo "Nickname $nickname"
-		echo "ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy"
-		echo "ExtORPort auto"
-		echo "BandwidthRate 512 KB"
-		echo "BandwidthBurst 1024 KB"
-	} > /etc/tor/torrc
+    cat > /etc/tor/torrc  << EOF
+    SocksPort 0
+    ORPort 443
+    BridgeRelay 1
+    Exitpolicy reject *:*
+    Nickname $nickname
+    ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
+    ExtORPort auto
+    BandwidthRate 512 KB
+    BandwidthBurst 1024 KB
+EOF
+
 
 	echo "##################################################"
 	echo "Restarting Tor"
@@ -108,21 +109,20 @@ config_add_repos() {
 
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
-	{
-		echo "# Debian packages for $VERSION"
-		echo "deb http://lug.mtu.edu/debian/ $VERSION main"
-		echo "deb http://lug.mtu.edu/debian/ $VERSION-updates main"
-		echo "# Security updates for $VERSION"
-		echo "deb http://security.debian.org/ $VERSION/updates main"
-	} > /etc/apt/sources.list
+    cat > /etc/apt/sources.list << EOF
+    # Debian packages for $VERSION
+    deb http://lug.mtu.edu/debian/ $VERSION main
+    deb http://lug.mtu.edu/debian/ $VERSION-updates main
+    # Security updates for $VERSION
+    deb http://security.debian.org/ $VERSION/updates main
+EOF
 
-	#Ignore translations
-	{
+    cat > /etc/apt/apt.conf.d/00aptitude << EOF
+    #Ignore translations
+    Acquire::Languages \"none\";
+EOF
 
-		echo "Acquire::Languages \"none\";"
-	} > /etc/apt/apt.conf.d/00aptitude
-	return 0
-}
+    return 0
 
 config_add_repos_https() {
 
@@ -130,14 +130,14 @@ config_add_repos_https() {
 	echo "Modifying Repository Sources"
 
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
-
-	{
-		echo "# Debian packages for $VERSION"
-		echo "deb https://lug.mtu.edu/debian/ $VERSION main"
-		echo "deb https://lug.mtu.edu/debian/ $VERSION-updates main"
-		echo "# Security updates for $VERSION"
-		echo "deb http://security.debian.org/ $VERSION/updates main"
-	} > /etc/apt/sources.list
+    
+    cat > /etc/apt/sources.list << EOF
+    # Debian packages for $VERSION
+    deb https://lug.mtu.edu/debian/ $VERSION main
+    deb https://lug.mtu.edu/debian/ $VERSION-updates main
+    # Security updates for $VERSION
+    deb http://security.debian.org/ $VERSION/updates main
+EOF
 
 	return 0
 }
@@ -240,13 +240,13 @@ config_misc_ssh() {
 	echo "##################################################"
 	echo "Adding SSH Banner"
 
-	{
-		echo "*************************************************************"
-		echo "This service is restricted to authorized users only."
-		echo "All activities on this system are logged. Unauthorized"
-		echo "access will be investigated and reported to law enforcement."
-		echo "*************************************************************"
-	} > /etc/issue.net
+    cat >> /etc/issue.net << EOF
+		*************************************************************
+		This service is restricted to authorized users only.
+		All activities on this system are logged. Unauthorized
+		access will be investigated and reported to law enforcement.
+		*************************************************************
+EOF
 
 	echo "##################################################"
 	echo "Remove motd"
@@ -257,95 +257,93 @@ config_misc_ssh() {
 	echo "SSH Configuration"
 	cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
 
-	echo "" > /etc/ssh/sshd_config
-
-
-echo "#IP, Port, Key, Logging Section:
+    cat > /etc/ssh/sshd_config << EOF
+    #IP, Port, Key, Logging Section:
         Port 922
         AddressFamily inet 
         
-#ListenAddress 0.0.0.0
+    #ListenAddress 0.0.0.0
         Protocol 2
 
-#HostKeys for protocol version 2
+    #HostKeys for protocol version 2
         #HostKey /etc/ssh/ssh_host_ed25519_key
         HostKey /etc/ssh/ssh_host_rsa_key
 
-#Privilege Separation is turned on for security
+    #Privilege Separation is turned on for security
         UsePrivilegeSeparation yes
 
-#Logging
+    #Logging
         SyslogFacility AUTH
         LogLevel INFO
 
-#Ciphers
+    #Ciphers
         #Ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes128-ctr
         Ciphers aes128-ctr,aes256-ctr
 
-#MACs
+    #MACs
         #MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
         MACs hmac-sha2-512,hmac-sha2-256
 
-#Key Exchange Algorithms
+    #Key Exchange Algorithms
         #KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
         KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256
 
-#Authentication Section:
-#Enable PAM authentication (non key authentication)
+    #Authentication Section:
+    #Enable PAM authentication (non key authentication)
         UsePAM no
-#The server disconnects after this time if the user has not successfully logged in. 
+    #The server disconnects after this time if the user has not successfully logged in.
         LoginGraceTime 120
-#Permits root login
+    #Permits root login
         PermitRootLogin yes
-#checks ownership of the user's files and home directory before accepting login.
+    #Checks ownership of the user's files and home directory before accepting login.
         StrictModes yes
 
-#Allows only these users to connect
+    #Allows only these users to connect
         $ALLOWUSERS
-#Number of authentications attempts per connection
+    #Number of authentications attempts per connection
         MaxAuthTries 1
-#Number of open sessions per connection
+    #Number of open sessions per connection
         MaxSessions 1
 
-#(start:rate:full)
+    #(start:rate:full)
         MaxStartups 1:100:1
 
-#Password Section
+    #Password Section
        PermitEmptyPasswords no
 
-# Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
+    # Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
         ChallengeResponseAuthentication no
 
-# Change to no to disable tunneled clear text passwords
+    # Change to no to disable tunneled clear text passwords
         PasswordAuthentication yes
 
 
-#Key Authentication Section:
+    #Key Authentication Section:
         #Version 1 only
         RSAAuthentication no
         #Version 2
         PubkeyAuthentication yes
 
-# Don't read the user's ~/.rhosts and ~/.shosts files
+    # Don't read the user's ~/.rhosts and ~/.shosts files
         IgnoreRhosts yes
-# For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
+    # For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
         RhostsRSAAuthentication no
-# similar for protocol version 2
+    # similar for protocol version 2
         HostbasedAuthentication no
-# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+    # Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
         IgnoreUserKnownHosts yes
 
 
-#Other Authentication Options:
+    #Other Authentication Options:
         KerberosAuthentication no
         GSSAPIAuthentication no
 
-#Timeout interval, requests data from client
+    #Timeout interval, requests data from client
         ClientAliveInterval 5
         ClientAliveCountMax 3
 
 
-#Further Restrictions Section:
+    #Further Restrictions Section:
         X11Forwarding no
         AllowAgentForwarding no
         PrintMotd no
@@ -360,15 +358,15 @@ echo "#IP, Port, Key, Logging Section:
         ChrootDirectory none
         
 
-#send TCP keepalive messages to the other side (spoofable)
+    #send TCP keepalive messages to the other side (spoofable)
         TCPKeepAlive no
-#Command never used for remote sessions
+    #Command never used for remote sessions
         UseLogin no
 
         Banner /etc/issue.net
 
-        Subsystem sftp /usr/lib/openssh/sftp-server" > /etc/ssh/sshd_config
-
+        Subsystem sftp /usr/lib/openssh/sftp-server
+EOF
 
 	echo "##################################################"
 	echo "Adding Pub Key"
