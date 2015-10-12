@@ -123,6 +123,7 @@ EOF
 EOF
 
     return 0
+}
 
 config_add_repos_https() {
 
@@ -156,7 +157,6 @@ config_mandatory() {
 
 	return 0
 }
-
 
 config_misc_ipv6() {
 
@@ -371,8 +371,9 @@ EOF
 	echo "##################################################"
 	echo "Adding Pub Key"
 	mkdir -p ~/.ssh
-	echo $SSH_PUB_KEY > ~/.ssh/authorized_keys
-
+	cat >> ~/.ssh/authorized_keys << EOF
+    $SSH_PUB_KEY
+EOF
 
 	echo "##################################################"
 	echo "Restarting SSH"
@@ -385,21 +386,19 @@ config_misc_unattended_upgrades() {
 
 	echo "##################################################"
 	echo "Configuring Unattended Upgrades"
+    cat >> /etc/apt/apt.conf.d/10periodic << EOF
+    APT::Periodic::Download-Upgradeable-Packages \"1\";
+    APT::Periodic::Unattended-Upgrade \"1\";
+	APT::Periodic::Update-Package-Lists \"1\";
+EOF
 
-	{
-		echo "APT::Periodic::Download-Upgradeable-Packages \"1\";"
-		echo "APT::Periodic::Unattended-Upgrade \"1\";"
-		echo "APT::Periodic::Update-Package-Lists \"1\";"
-	} > /etc/apt/apt.conf.d/10periodic
-
-	{
-		echo "Unattended-Upgrade::Origins-Pattern {"
-		echo "        \"o=Debian,n=$VERSION\";"
-		echo "        \"o=Debian,n=$VERSION-updates\";"
-		echo "        \"o=Debian,n=$VERSION,l=Debian-Security\";"
-		echo "};"
-	} > /etc/apt/apt.conf.d/50unattended-upgrades
-
+    cat > /etc/apt/apt.conf.d/50unattended-upgrades << EOF
+    Unattended-Upgrade::Origins-Pattern {
+    "o=Debian,n=$VERSION";
+    "o=Debian,n=$VERSION-updates";
+    "o=Debian,n=$VERSION,l=Debian-Security";
+};
+EOF
 	return 0
 }
 
