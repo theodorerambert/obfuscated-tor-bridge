@@ -1,30 +1,44 @@
-#Summary
-#Installs & Configures an obfuscated Tor Bridge
-#Sets up automatic updates
-#Misc Config settings for server
-#MIT License
+#!/bin/bash
+
+### 
+# Script scope:
+# 1. 'Harden' the config of a traditional Debian (VPS) install.
+#	* Using the lug.mtu.edu repo for authenticated and encrypted communiction (TLSv1.2, AES-GCM).
+#		* https://www.ssllabs.com/ssltest/analyze.html?d=lug.mtu.edu&latest
+#		* TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ECDH 521 bits (NIST P-521 curve).
+#	* Recommendations for 'Secure' baseline configurations are constantly changing.
+#	* It is highly advised that you regen SSH keys (See instructions below).
+#
+# 2. Setup automatic updates.
+#
+# 3. Optionally install and autoconfigure Tor to run as an Obfs[3|4]proxy Bridge.
+#
+#
+# Generate & Verify a host's RSA keypair
+#	ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key
+#	ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
+#
+# Generate & Verify a host's ed25519 keypair
+#	ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key
+#	ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
+#
+# See Readme for variables
+# 
+# Authors: https://github.com/theodorerambert/obfuscated-tor-bridge/graphs/contributors
+# Project site: https://github.com/theodorerambert/obfuscated-tor-bridge
+#
+# The MIT License (MIT)
+# Copyright (c) 2015 Theodore Rambert
+#
+###
 
 
-#Before or after running the script
-#Regen SSH Keys
-
-#rm -rf /etc/ssh/ssh_host*
-#ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key
-#ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
-
-#Twisted Edwards curve
-#ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key
-#ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
-
-#Variables
-    #See Readme
-
-#Debian Version
-VERSION=jessie
-
+DEBIAN_VERSION=jessie
 PREFIX=0000
 #ALLOWUSERS="AllowUsers root@*.*.*.*"
 #SSH_PUB_KEY="ssh-rsa ..."
+SSH_PORT=822
+
 
 server_update() {
 
@@ -56,7 +70,7 @@ server_install_tor_packages() {
 	echo "Add Tor repository"
 
 	cat <<-EOF >> /etc/apt/sources.list
-	deb https://deb.torproject.org/torproject.org $VERSION main
+	deb https://deb.torproject.org/torproject.org $DEBIAN_VERSION main
 	deb https://deb.torproject.org/torproject.org obfs4proxy main
 EOF
 
@@ -106,11 +120,11 @@ config_add_repos() {
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
 	cat <<-EOF > /etc/apt/sources.list
-	# Debian packages for $VERSION
-	deb http://lug.mtu.edu/debian/ $VERSION main
-	deb http://lug.mtu.edu/debian/ $VERSION-updates main
-	# Security updates for $VERSION
-	deb http://security.debian.org/ $VERSION/updates main
+	# Debian packages for $DEBIAN_VERSION
+	deb http://lug.mtu.edu/debian/ $DEBIAN_VERSION main
+	deb http://lug.mtu.edu/debian/ $DEBIAN_VERSION-updates main
+	# Security updates for $DEBIAN_VERSION
+	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
 
 	cat <<-EOF > /etc/apt/apt.conf.d/00aptitude
@@ -129,11 +143,11 @@ config_add_repos_https() {
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
 	cat <<-EOF > /etc/apt/sources.list
-	# Debian packages for $VERSION
-	deb https://lug.mtu.edu/debian/ $VERSION main
-	deb https://lug.mtu.edu/debian/ $VERSION-updates main
-	# Security updates for $VERSION
-	deb http://security.debian.org/ $VERSION/updates main
+	# Debian packages for $DEBIAN_VERSION
+	deb https://lug.mtu.edu/debian/ $DEBIAN_VERSION main
+	deb https://lug.mtu.edu/debian/ $DEBIAN_VERSION-updates main
+	# Security updates for $DEBIAN_VERSION
+	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
 
 	return 0
@@ -141,8 +155,8 @@ EOF
 
 config_mandatory() {
 
-	#echo "##################################################"
-	#echo "Fixing locale issue"
+	echo "##################################################"
+	echo "Fixing locale issue"
 
 	echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 	locale-gen
@@ -170,7 +184,7 @@ config_misc_netselect_apt() {
 
 	cp /etc/apt/sources.list /etc/apt/sources.list.bak
 	netselect-apt -c US -o /etc/apt/sources.list
-	sed -i 's/stable/$VERSION/g' /etc/apt/sources.list
+	sed -i 's/stable/$DEBIAN_VERSION/g' /etc/apt/sources.list
 
 	server_update
 
@@ -230,7 +244,6 @@ config_misc_permissions() {
 	return 0
 }
 
-
 config_misc_ssh() {
 
 	echo "##################################################"
@@ -254,8 +267,8 @@ EOF
 	cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
 
 	cat <<-EOF > /etc/ssh/sshd_config
-	#IP, Port, Key, Logging Section:
-	Port 922
+	#IP, Port, Crypto, Logging Section:
+	Port $SSH_PORT
 	AddressFamily inet
 
 	#ListenAddress 0.0.0.0
@@ -284,6 +297,7 @@ EOF
 	#KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
 	KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256
 
+
 	#Authentication Section:
 	#Enable PAM authentication (non key authentication)
 	UsePAM no
@@ -305,7 +319,7 @@ EOF
 	MaxStartups 1:100:1
 
 	#Password Section
-	   PermitEmptyPasswords no
+	PermitEmptyPasswords no
 
 	# Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
 	ChallengeResponseAuthentication no
@@ -334,12 +348,13 @@ EOF
 	KerberosAuthentication no
 	GSSAPIAuthentication no
 
-	#Timeout interval, requests data from client
-	ClientAliveInterval 5
-	ClientAliveCountMax 3
 
 
 	#Further Restrictions Section:
+	#Timeout interval, requests data from client
+	ClientAliveInterval 5
+	ClientAliveCountMax 3
+	
 	X11Forwarding no
 	AllowAgentForwarding no
 	PrintMotd no
@@ -352,7 +367,6 @@ EOF
 
 	#chroot directory
 	ChrootDirectory none
-
 
 	#send TCP keepalive messages to the other side (spoofable)
 	TCPKeepAlive no
@@ -390,10 +404,10 @@ EOF
 
 	cat <<-EOF > /etc/apt/apt.conf.d/50unattended-upgrades
 	Unattended-Upgrade::Origins-Pattern {
-	"o=Debian,n=$VERSION";
-	"o=Debian,n=$VERSION-updates";
-	"o=Debian,n=$VERSION,l=Debian-Security";
-};
+	"o=Debian,n=$DEBIAN_VERSION";
+	"o=Debian,n=$DEBIAN_VERSION-updates";
+	"o=Debian,n=$DEBIAN_VERSION,l=Debian-Security";
+	};
 EOF
 	return 0
 }
@@ -411,7 +425,7 @@ misc_pull_repos() {
 misc_remove_extras() {
 
 	echo "##################################################"
-	echo "Removing Apache, Bind & Samba"
+	echo "Removing Apache, Bind, Sendmail & Samba to reduce attack surface"
 
 	apt-get -y remove apache2 apache2-doc apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common \
     bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common sendmail sendmail-base sendmail-bin sendmail-cf sendmail-doc
@@ -459,7 +473,7 @@ tor_install() {
 echo "##################################################"
 echo "Hellos"
 
-echo "Choose 1 for a Base, 2 for Tor or 3 for Both"
+echo "Choose 1 for the Base install, 2 for Tor or 3 for Both"
 read -p "Select an option [1-3]: " OPTION
 	case $OPTION in
 	1)
