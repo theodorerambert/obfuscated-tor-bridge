@@ -12,22 +12,18 @@
 #ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key
 #ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
 
-#Fancy Twisted Edwards curve
+#Twisted Edwards curve
 #ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key
 #ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
 
-
-#service ssh start
-#bash -n script.sh
-
 #Variables
+    #See Readme
 
 #Debian Version
 VERSION=jessie
 
 PREFIX=0000
 #ALLOWUSERS="AllowUsers root@*.*.*.*"
-
 #SSH_PUB_KEY="ssh-rsa ..."
 
 server_update() {
@@ -59,9 +55,9 @@ server_install_tor_packages() {
 	echo "##################################################"
 	echo "Add Tor repository"
 
-	cat >> /etc/apt/sources.list << EOF
-    deb https://deb.torproject.org/torproject.org $VERSION main
-    deb https://deb.torproject.org/torproject.org obfs4proxy main
+	cat <<-EOF >> /etc/apt/sources.list
+	deb https://deb.torproject.org/torproject.org $VERSION main
+	deb https://deb.torproject.org/torproject.org obfs4proxy main
 EOF
 
 	echo "##################################################"
@@ -82,16 +78,16 @@ EOF
 
 	cp -a /etc/tor/torrc /etc/tor/torrc.orig
 
-    cat > /etc/tor/torrc  << EOF
-    SocksPort 0
-    ORPort 443
-    BridgeRelay 1
-    Exitpolicy reject *:*
-    Nickname $nickname
-    ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
-    ExtORPort auto
-    BandwidthRate 512 KB
-    BandwidthBurst 1024 KB
+	cat <<-EOF > /etc/tor/torrc
+	SocksPort 0
+	ORPort 443
+	BridgeRelay 1
+	Exitpolicy reject *:*
+	Nickname $nickname
+	ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
+	ExtORPort auto
+	BandwidthRate 512 KB
+	BandwidthBurst 1024 KB
 EOF
 
 
@@ -109,20 +105,20 @@ config_add_repos() {
 
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
-    cat > /etc/apt/sources.list << EOF
-    # Debian packages for $VERSION
-    deb http://lug.mtu.edu/debian/ $VERSION main
-    deb http://lug.mtu.edu/debian/ $VERSION-updates main
-    # Security updates for $VERSION
-    deb http://security.debian.org/ $VERSION/updates main
+	cat <<-EOF > /etc/apt/sources.list
+	# Debian packages for $VERSION
+	deb http://lug.mtu.edu/debian/ $VERSION main
+	deb http://lug.mtu.edu/debian/ $VERSION-updates main
+	# Security updates for $VERSION
+	deb http://security.debian.org/ $VERSION/updates main
 EOF
 
-    cat > /etc/apt/apt.conf.d/00aptitude << EOF
-    #Ignore translations
-    Acquire::Languages \"none\";
+	cat <<-EOF > /etc/apt/apt.conf.d/00aptitude
+	#Ignore translations
+	Acquire::Languages "none";
 EOF
 
-    return 0
+	return 0
 }
 
 config_add_repos_https() {
@@ -131,13 +127,13 @@ config_add_repos_https() {
 	echo "Modifying Repository Sources"
 
 	cp /etc/apt/sources.list /etc/apt/sources.list.orig
-    
-    cat > /etc/apt/sources.list << EOF
-    # Debian packages for $VERSION
-    deb https://lug.mtu.edu/debian/ $VERSION main
-    deb https://lug.mtu.edu/debian/ $VERSION-updates main
-    # Security updates for $VERSION
-    deb http://security.debian.org/ $VERSION/updates main
+
+	cat <<-EOF > /etc/apt/sources.list
+	# Debian packages for $VERSION
+	deb https://lug.mtu.edu/debian/ $VERSION main
+	deb https://lug.mtu.edu/debian/ $VERSION-updates main
+	# Security updates for $VERSION
+	deb http://security.debian.org/ $VERSION/updates main
 EOF
 
 	return 0
@@ -240,12 +236,12 @@ config_misc_ssh() {
 	echo "##################################################"
 	echo "Adding SSH Banner"
 
-    cat >> /etc/issue.net << EOF
-		*************************************************************
-		This service is restricted to authorized users only.
-		All activities on this system are logged. Unauthorized
-		access will be investigated and reported to law enforcement.
-		*************************************************************
+	cat <<-EOF > /etc/issue.net
+	*************************************************************
+	This service is restricted to authorized users only.
+	All activities on this system are logged. Unauthorized
+	access will be investigated and reported to law enforcement.
+	*************************************************************
 EOF
 
 	echo "##################################################"
@@ -257,122 +253,122 @@ EOF
 	echo "SSH Configuration"
 	cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
 
-    cat > /etc/ssh/sshd_config << EOF
-    #IP, Port, Key, Logging Section:
-        Port 922
-        AddressFamily inet 
-        
-    #ListenAddress 0.0.0.0
-        Protocol 2
+	cat <<-EOF > /etc/ssh/sshd_config
+	#IP, Port, Key, Logging Section:
+	Port 922
+	AddressFamily inet
 
-    #HostKeys for protocol version 2
-        #HostKey /etc/ssh/ssh_host_ed25519_key
-        HostKey /etc/ssh/ssh_host_rsa_key
+	#ListenAddress 0.0.0.0
+	Protocol 2
 
-    #Privilege Separation is turned on for security
-        UsePrivilegeSeparation yes
+	#HostKeys for protocol version 2
+	#HostKey /etc/ssh/ssh_host_ed25519_key
+	HostKey /etc/ssh/ssh_host_rsa_key
 
-    #Logging
-        SyslogFacility AUTH
-        LogLevel INFO
+	#Privilege Separation is turned on for security
+	UsePrivilegeSeparation yes
 
-    #Ciphers
-        #Ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes128-ctr
-        Ciphers aes128-ctr,aes256-ctr
+	#Logging
+	SyslogFacility AUTH
+	LogLevel INFO
 
-    #MACs
-        #MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
-        MACs hmac-sha2-512,hmac-sha2-256
+	#Ciphers
+	#Ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes128-ctr
+	Ciphers aes128-ctr,aes256-ctr
 
-    #Key Exchange Algorithms
-        #KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
-        KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256
+	#MACs
+	#MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+	MACs hmac-sha2-512,hmac-sha2-256
 
-    #Authentication Section:
-    #Enable PAM authentication (non key authentication)
-        UsePAM no
-    #The server disconnects after this time if the user has not successfully logged in.
-        LoginGraceTime 120
-    #Permits root login
-        PermitRootLogin yes
-    #Checks ownership of the user's files and home directory before accepting login.
-        StrictModes yes
+	#Key Exchange Algorithms
+	#KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
+	KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256
 
-    #Allows only these users to connect
-        $ALLOWUSERS
-    #Number of authentications attempts per connection
-        MaxAuthTries 1
-    #Number of open sessions per connection
-        MaxSessions 1
+	#Authentication Section:
+	#Enable PAM authentication (non key authentication)
+	UsePAM no
+	#The server disconnects after this time if the user has not successfully logged in.
+	LoginGraceTime 120
+	#Permits root login
+	PermitRootLogin yes
+	#Checks ownership of the user's files and home directory before accepting login.
+	StrictModes yes
 
-    #(start:rate:full)
-        MaxStartups 1:100:1
+	#Allows only these users to connect
+	$ALLOWUSERS
+	#Number of authentications attempts per connection
+	MaxAuthTries 1
+	#Number of open sessions per connection
+	MaxSessions 1
 
-    #Password Section
-       PermitEmptyPasswords no
+	#(start:rate:full)
+	MaxStartups 1:100:1
 
-    # Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
-        ChallengeResponseAuthentication no
+	#Password Section
+	   PermitEmptyPasswords no
 
-    # Change to no to disable tunneled clear text passwords
-        PasswordAuthentication yes
+	# Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
+	ChallengeResponseAuthentication no
 
-
-    #Key Authentication Section:
-        #Version 1 only
-        RSAAuthentication no
-        #Version 2
-        PubkeyAuthentication yes
-
-    # Don't read the user's ~/.rhosts and ~/.shosts files
-        IgnoreRhosts yes
-    # For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
-        RhostsRSAAuthentication no
-    # similar for protocol version 2
-        HostbasedAuthentication no
-    # Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
-        IgnoreUserKnownHosts yes
+	# Change to no to disable tunneled clear text passwords
+	PasswordAuthentication yes
 
 
-    #Other Authentication Options:
-        KerberosAuthentication no
-        GSSAPIAuthentication no
+	#Key Authentication Section:
+	#Version 1 only
+	RSAAuthentication no
+	#Version 2
+	PubkeyAuthentication yes
 
-    #Timeout interval, requests data from client
-        ClientAliveInterval 5
-        ClientAliveCountMax 3
+	# Don't read the user's ~/.rhosts and ~/.shosts files
+	IgnoreRhosts yes
+	# For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
+	RhostsRSAAuthentication no
+	# similar for protocol version 2
+	HostbasedAuthentication no
+	# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+	IgnoreUserKnownHosts yes
 
 
-    #Further Restrictions Section:
-        X11Forwarding no
-        AllowAgentForwarding no
-        PrintMotd no
-        PrintLastLog yes
-        #Device forwarding 
-        PermitTunnel no
+	#Other Authentication Options:
+	KerberosAuthentication no
+	GSSAPIAuthentication no
 
-        #Compression
-        Compression no
+	#Timeout interval, requests data from client
+	ClientAliveInterval 5
+	ClientAliveCountMax 3
 
-        #chroot directory
-        ChrootDirectory none
-        
 
-    #send TCP keepalive messages to the other side (spoofable)
-        TCPKeepAlive no
-    #Command never used for remote sessions
-        UseLogin no
+	#Further Restrictions Section:
+	X11Forwarding no
+	AllowAgentForwarding no
+	PrintMotd no
+	PrintLastLog yes
+	#Device forwarding
+	PermitTunnel no
 
-        Banner /etc/issue.net
+	#Compression
+	Compression no
 
-        Subsystem sftp /usr/lib/openssh/sftp-server
+	#chroot directory
+	ChrootDirectory none
+
+
+	#send TCP keepalive messages to the other side (spoofable)
+	TCPKeepAlive no
+	#Command never used for remote sessions
+	UseLogin no
+
+	Banner /etc/issue.net
+
+	Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
 	echo "##################################################"
 	echo "Adding Pub Key"
 	mkdir -p ~/.ssh
-	cat >> ~/.ssh/authorized_keys << EOF
-    $SSH_PUB_KEY
+	cat <<-EOF >> ~/.ssh/authorized_keys
+	$SSH_PUB_KEY
 EOF
 
 	echo "##################################################"
@@ -386,17 +382,17 @@ config_misc_unattended_upgrades() {
 
 	echo "##################################################"
 	echo "Configuring Unattended Upgrades"
-    cat >> /etc/apt/apt.conf.d/10periodic << EOF
-    APT::Periodic::Download-Upgradeable-Packages \"1\";
-    APT::Periodic::Unattended-Upgrade \"1\";
-	APT::Periodic::Update-Package-Lists \"1\";
+	cat <<-EOF >> /etc/apt/apt.conf.d/10periodic
+	APT::Periodic::Download-Upgradeable-Packages "1";
+	APT::Periodic::Unattended-Upgrade "1";
+	APT::Periodic::Update-Package-Lists "1";
 EOF
 
-    cat > /etc/apt/apt.conf.d/50unattended-upgrades << EOF
-    Unattended-Upgrade::Origins-Pattern {
-    "o=Debian,n=$VERSION";
-    "o=Debian,n=$VERSION-updates";
-    "o=Debian,n=$VERSION,l=Debian-Security";
+	cat <<-EOF > /etc/apt/apt.conf.d/50unattended-upgrades
+	Unattended-Upgrade::Origins-Pattern {
+	"o=Debian,n=$VERSION";
+	"o=Debian,n=$VERSION-updates";
+	"o=Debian,n=$VERSION,l=Debian-Security";
 };
 EOF
 	return 0
@@ -417,7 +413,8 @@ misc_remove_extras() {
 	echo "##################################################"
 	echo "Removing Apache, Bind & Samba"
 
-	apt-get -y remove apache2 apache2-doc apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common sendmail sendmail-base sendmail-bin sendmail-cf sendmail-doc
+	apt-get -y remove apache2 apache2-doc apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common \
+    bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common sendmail sendmail-base sendmail-bin sendmail-cf sendmail-doc
 
 	return 0
 }
@@ -466,19 +463,19 @@ echo "Choose 1 for a Base, 2 for Tor or 3 for Both"
 read -p "Select an option [1-3]: " OPTION
 	case $OPTION in
 	1)
-		base_install
-		echo "Base is installed"
-		exit
+        base_install
+	    echo "Base is installed"
+	    exit
 	;;
 	2)
-		tor_install
-		echo "Tor is installed"
-		exit
+	    tor_install
+	    echo "Tor is installed"
+	    exit
 	;;
 	3)
-		base_install
-		tor_install
-		echo "Both base & Tor are installed"
-		exit
+	    base_install
+	    tor_install
+	    echo "Both base & Tor are installed"
+	    exit
 	;;
-    esac
+	esac
