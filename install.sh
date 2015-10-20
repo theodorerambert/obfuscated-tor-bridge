@@ -409,6 +409,12 @@ EOF
 	"o=Debian,n=$DEBIAN_VERSION,l=Debian-Security";
 	};
 EOF
+
+    cat <<-EOF > /etc/apt/apt.conf.d/00https
+    Acquire::https::Verify-Host "true";
+    Acquire::https::SslForceVersion "TLSv1.2";
+EOF
+
 	return 0
 }
 
