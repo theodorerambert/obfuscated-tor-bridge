@@ -3,7 +3,7 @@
 ### 
 # Script scope:
 # 1. 'Harden' the config of a traditional Debian (VPS) install.
-#	* Using the lug.mtu.edu repo for authenticated and encrypted communiction (TLSv1.2, AES-GCM).
+#	* Using the lug.mtu.edu repo for authenticated and encrypted communication (TLSv1.2, AES-GCM).
 #		* https://www.ssllabs.com/ssltest/analyze.html?d=lug.mtu.edu&latest
 #		* TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ECDH 521 bits (NIST P-521 curve).
 #	* Recommendations for 'Secure' baseline configurations are constantly changing.
