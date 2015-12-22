@@ -402,14 +402,6 @@ config_misc_unattended_upgrades() {
 	APT::Periodic::Update-Package-Lists "1";
 EOF
 
-	cat <<-EOF > /etc/apt/apt.conf.d/50unattended-upgrades
-	Unattended-Upgrade::Origins-Pattern {
-	"o=Debian,n=$DEBIAN_VERSION";
-	"o=Debian,n=$DEBIAN_VERSION-updates";
-	"o=Debian,n=$DEBIAN_VERSION,l=Debian-Security";
-	};
-EOF
-
     cat <<-EOF > /etc/apt/apt.conf.d/00https
     Acquire::https::Verify-Host "true";
     Acquire::https::SslForceVersion "TLSv1.2";
