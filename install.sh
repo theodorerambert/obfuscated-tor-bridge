@@ -37,7 +37,8 @@ DEBIAN_VERSION=jessie
 PREFIX=0000
 #ALLOWUSERS="AllowUsers root@*.*.*.*"
 #SSH_PUB_KEY="ssh-rsa ..."
-SSH_PORT=822
+SSH_PORT=22
+NICKNAME=`echo $PREFIX$HOSTNAME|sed 's/-//g'`
 
 
 server_update() {
@@ -59,7 +60,6 @@ server_install_base_packages() {
 	server_update
 
 	apt-get -y install apt-transport-https unattended-upgrades vim vnstat
-	#apt-get -y install apt-transport-https netselect-apt unattended-upgrades vim vnstat
 
 	return 0
 }
@@ -87,9 +87,6 @@ EOF
 	echo "##################################################"
 	echo "Configuring Tor"
 
-	#Generate Nickname
-	nickname=`echo $PREFIX$HOSTNAME|sed 's/-//g'`
-
 	cp -a /etc/tor/torrc /etc/tor/torrc.orig
 
 	cat <<-EOF > /etc/tor/torrc
@@ -97,7 +94,7 @@ EOF
 	ORPort 443
 	BridgeRelay 1
 	Exitpolicy reject *:*
-	Nickname $nickname
+	Nickname $NICKNAME
 	ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
 	ExtORPort auto
 	BandwidthRate 512 KB
@@ -173,20 +170,6 @@ config_misc_ipv6() {
 	echo "##################################################"
 	echo "Disable IPv6"
 	echo "net.ipv6.conf.all.disable_ipv6=1" > /etc/sysctl.d/disableipv6.conf
-
-	return 0
-}
-
-config_misc_netselect_apt() {
-
-	echo "##################################################"
-	echo "Selecting the Best Repository Sources"
-
-	cp /etc/apt/sources.list /etc/apt/sources.list.bak
-	netselect-apt -c US -o /etc/apt/sources.list
-	sed -i 's/stable/$DEBIAN_VERSION/g' /etc/apt/sources.list
-
-	server_update
 
 	return 0
 }
@@ -349,7 +332,6 @@ EOF
 	GSSAPIAuthentication no
 
 
-
 	#Further Restrictions Section:
 	#Timeout interval, requests data from client
 	ClientAliveInterval 5
@@ -444,13 +426,12 @@ base_install() {
 	server_update
 	misc_remove_extras
 	config_misc_ipv6
-	#config_misc_netselect_apt
 	config_misc_permissions
 	config_misc_ssh
 	config_misc_unattended_upgrades
 
 	echo "##################################################"
-	echo "Base Install Complete (Ideally)"
+	echo "Base Install Complete"
 
 	return 0
 }
@@ -463,13 +444,11 @@ tor_install() {
 	server_install_tor_packages
 
 	echo "##################################################"
-	echo "Tor Install Complete (Ideally)"
+	echo "Tor Install Complete"
 
 	return 0
 }
 
-echo "##################################################"
-echo "Hellos"
 
 echo "Choose 1 for the Base install, 2 for Tor or 3 for Both"
 read -p "Select an option [1-3]: " OPTION
