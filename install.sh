@@ -155,12 +155,18 @@ config_mandatory() {
 	echo "##################################################"
 	echo "Fixing locale issue"
 
-	echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-	locale-gen
+    cat <<-EOF >> /etc/locale.gen
+	en_US.UTF-8 UTF-8
+EOF
+
+    locale-gen
 
 	echo "##################################################"
 	echo "Setting Timezone"
-	echo "America/New_York" > /etc/timezone
+
+    cat <<-EOF > /etc/timezone
+	America/New_York
+EOF
 
 	return 0
 }
@@ -169,7 +175,10 @@ config_misc_ipv6() {
 
 	echo "##################################################"
 	echo "Disable IPv6"
-	echo "net.ipv6.conf.all.disable_ipv6=1" > /etc/sysctl.d/disableipv6.conf
+
+    cat <<-EOF > /etc/sysctl.d/disableipv6.conf
+    net.ipv6.conf.all.disable_ipv6=1
+EOF
 
 	return 0
 }
