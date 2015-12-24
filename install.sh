@@ -387,10 +387,11 @@ config_misc_unattended_upgrades() {
 
 	echo "##################################################"
 	echo "Configuring Unattended Upgrades"
-	cat <<-EOF >> /etc/apt/apt.conf.d/10periodic
+	cat <<-EOF > /etc/apt/apt.conf.d/02periodic
 	APT::Periodic::Download-Upgradeable-Packages "1";
 	APT::Periodic::Unattended-Upgrade "1";
 	APT::Periodic::Update-Package-Lists "1";
+    APT::Periodic::Enable "1";
 EOF
 
     cat <<-EOF > /etc/apt/apt.conf.d/00https
