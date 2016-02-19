@@ -2,11 +2,10 @@
 
 ### 
 # Script scope:
-# 1. 'Harden' the config of a traditional Debian (VPS) install.
+# 1. Harden the config of a traditional Debian (VPS) install.
 #	* Using the lug.mtu.edu repo for authenticated and encrypted communication (TLSv1.2, AES-GCM).
 #		* https://www.ssllabs.com/ssltest/analyze.html?d=lug.mtu.edu&latest
-#		* TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ECDH 521 bits (NIST P-521 curve).
-#	* Recommendations for 'Secure' baseline configurations are constantly changing.
+#	* Recommendations for a more secure baseline configuration.
 #	* It is highly advised that you regen SSH keys (See instructions below).
 #
 # 2. Setup automatic updates.
@@ -29,6 +28,8 @@
 #
 # The MIT License (MIT)
 # Copyright (c) 2015 Theodore Rambert
+#
+# Revised 2/18/2016
 #
 ###
 
@@ -152,20 +153,20 @@ EOF
 
 config_mandatory() {
 
-	echo "##################################################"
-	echo "Fixing locale issue"
+        echo "##################################################"
+        echo "Fixing locale issue"
 
-    cat <<-EOF >> /etc/locale.gen
-	en_US.UTF-8 UTF-8
+        cat <<-EOF >> /etc/locale.gen
+        en_US.UTF-8 UTF-8
 EOF
 
-    locale-gen
+        locale-gen
 
-	echo "##################################################"
-	echo "Setting Timezone"
+        echo "##################################################"
+        echo "Setting Timezone"
 
-    cat <<-EOF > /etc/timezone
-	America/New_York
+        cat <<-EOF > /etc/timezone
+        America/New_York
 EOF
 
 	return 0
@@ -176,8 +177,8 @@ config_misc_ipv6() {
 	echo "##################################################"
 	echo "Disable IPv6"
 
-    cat <<-EOF > /etc/sysctl.d/disableipv6.conf
-    net.ipv6.conf.all.disable_ipv6=1
+        cat <<-EOF > /etc/sysctl.d/disableipv6.conf
+        net.ipv6.conf.all.disable_ipv6=1
 EOF
 
 	return 0
@@ -287,7 +288,7 @@ EOF
 
 	#Key Exchange Algorithms
 	#KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
-	KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256
+	KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384
 
 
 	#Authentication Section:
@@ -297,6 +298,9 @@ EOF
 	LoginGraceTime 120
 	#Permits root login
 	PermitRootLogin yes
+	#Permits root login only with a key
+	PermitRootLogin without-password
+
 	#Checks ownership of the user's files and home directory before accepting login.
 	StrictModes yes
 
@@ -313,10 +317,10 @@ EOF
 	#Password Section
 	PermitEmptyPasswords no
 
-	# Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
+	#Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
 	ChallengeResponseAuthentication no
 
-	# Change to no to disable tunneled clear text passwords
+	#Change to no to disable tunneled clear text passwords
 	PasswordAuthentication yes
 
 
@@ -326,13 +330,13 @@ EOF
 	#Version 2
 	PubkeyAuthentication yes
 
-	# Don't read the user's ~/.rhosts and ~/.shosts files
+	#Don't read the user's ~/.rhosts and ~/.shosts files
 	IgnoreRhosts yes
-	# For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
+	#For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
 	RhostsRSAAuthentication no
-	# similar for protocol version 2
+	#Similar for protocol version 2
 	HostbasedAuthentication no
-	# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+	#Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
 	IgnoreUserKnownHosts yes
 
 
@@ -394,22 +398,24 @@ config_misc_unattended_upgrades() {
     APT::Periodic::Enable "1";
 EOF
 
-    cat <<-EOF > /etc/apt/apt.conf.d/00https
-    Acquire::https::Verify-Host "true";
-    Acquire::https::SslForceVersion "TLSv1.2";
+        cat <<-EOF > /etc/apt/apt.conf.d/00https
+        Acquire::https::Verify-Host "true";
+        Acquire::https::SslForceVersion "TLSv1.2";
 EOF
 
-	return 0
+        chmod +x /etc/cron.daily/apt
+
+        return 0
 }
 
 misc_pull_repos() {
 
-	echo "##################################################"
-	echo "Refresh Repos"
+        echo "##################################################"
+        echo "Refresh Repos"
 
-	apt-get update
+        apt-get update
 
-	return 0
+        return 0
 }
 
 misc_remove_extras() {
@@ -418,7 +424,7 @@ misc_remove_extras() {
 	echo "Removing Apache, Bind, Sendmail & Samba to reduce attack surface"
 
 	apt-get -y remove apache2 apache2-doc apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common \
-    bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common sendmail sendmail-base sendmail-bin sendmail-cf sendmail-doc
+    bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common
 
 	return 0
 }
