@@ -7,7 +7,7 @@ Quick script to setup an obfuscated tor bridge
   * Misc Config settings for a VPS provider
   
   ####Variables
-   * VERSION (Script works for Debian Jessie)
+   * VERSION (Script tested only with Debian 8 (Jessie), incompatible with Wheezy)
    * PREFIX (used to identify the status of your bridges using atlas)
      * see: https://atlas.torproject.org
    * ALLOWUSERS: variable for restricting SSH access to a user and/or an IP address
