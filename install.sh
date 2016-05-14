@@ -289,7 +289,6 @@ EOF
 
 	#HostKeys for protocol version 2
 	HostKey /etc/ssh/ssh_host_ed25519_key
-	HostKey /etc/ssh/ssh_host_rsa_key
 
 	#Privilege Separation is turned on for security
 	UsePrivilegeSeparation yes
@@ -396,6 +395,10 @@ EOF
 	cat <<-EOF >> ~/.ssh/authorized_keys
 	$SSH_PUB_KEY
 EOF
+
+	echo "##################################################"
+	echo "Removing other keys"
+	ls /etc/ssh | egrep -iv "moduli|config|ed25519" | xargs rm -rf
 
 	echo "##################################################"
 	echo "Restarting SSH"
