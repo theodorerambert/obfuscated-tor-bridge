@@ -29,7 +29,7 @@
 # The MIT License (MIT)
 # Copyright (c) 2015 Theodore Rambert
 #
-# Revised 2/18/2016
+# Revised 5/14/2016
 #
 ###
 
@@ -190,25 +190,32 @@ config_misc_permissions() {
 	echo "Permissions Section"
 
 	echo "Change shells"
-	chsh -s /usr/sbin/nologin games
-	chsh -s /usr/sbin/nologin games
-	chsh -s /usr/sbin/nologin nobody
-	chsh -s /usr/sbin/nologin proxy
-	chsh -s /usr/sbin/nologin www-data
-	chsh -s /usr/sbin/nologin libuuid
-	chsh -s /usr/sbin/nologin gnats
-	chsh -s /usr/sbin/nologin irc
-	chsh -s /usr/sbin/nologin uucp
-	chsh -s /usr/sbin/nologin mail
-	chsh -s /usr/sbin/nologin lp
-	chsh -s /usr/sbin/nologin man
-	chsh -s /usr/sbin/nologin sync
-	chsh -s /usr/sbin/nologin sys
-	chsh -s /usr/sbin/nologin bin
-	chsh -s /usr/sbin/nologin news
-	chsh -s /usr/sbin/nologin list
-	chsh -s /usr/sbin/nologin backup
-	chsh -s /usr/sbin/nologin daemon
+	chsh -s /usr/sbin/false games
+	chsh -s /usr/sbin/false games
+	chsh -s /usr/sbin/false nobody
+	chsh -s /usr/sbin/false proxy
+	chsh -s /usr/sbin/false www-data
+	chsh -s /usr/sbin/false gnats
+	chsh -s /usr/sbin/false irc
+	chsh -s /usr/sbin/false uucp
+	chsh -s /usr/sbin/false mail
+	chsh -s /usr/sbin/false lp
+	chsh -s /usr/sbin/false man
+	chsh -s /usr/sbin/false sync
+	chsh -s /usr/sbin/false sys
+	chsh -s /usr/sbin/false bin
+	chsh -s /usr/sbin/false news
+	chsh -s /usr/sbin/false list
+	chsh -s /usr/sbin/false backup
+	chsh -s /usr/sbin/false daemon
+	chsh -s /usr/sbin/false systemd-timesync
+	chsh -s /usr/sbin/false systemd-network
+	chsh -s /usr/sbin/false systemd-resolve
+	chsh -s /usr/sbin/false systemd-bus-proxy
+	chsh -s /usr/sbin/false uuidd
+	chsh -s /usr/sbin/false postfix
+	chsh -s /usr/sbin/false bind
+	chsh -s /usr/sbin/false fetchmail
 
 	echo "Chmod common commands"
 
@@ -233,6 +240,19 @@ config_misc_permissions() {
 	chmod 0400 /etc/shadow
 	chmod 0700 /etc/crontab
 	chmod 0400 /etc/ssh/*
+
+	return 0
+}
+config_misc_postfix() {
+
+	echo "##################################################"
+	echo "Bind Postfix to localhost"
+
+	sed -i 's/inet_interfaces = all/inet_interfaces = 127.0.0.1/g' /etc/postfix/main.cf
+
+	echo "##################################################"
+	echo "Restart Postfix"
+	service postfix restart
 
 	return 0
 }
@@ -268,7 +288,7 @@ EOF
 	Protocol 2
 
 	#HostKeys for protocol version 2
-	#HostKey /etc/ssh/ssh_host_ed25519_key
+	HostKey /etc/ssh/ssh_host_ed25519_key
 	HostKey /etc/ssh/ssh_host_rsa_key
 
 	#Privilege Separation is turned on for security
@@ -279,16 +299,13 @@ EOF
 	LogLevel INFO
 
 	#Ciphers
-	#Ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes128-ctr
-	Ciphers aes128-ctr,aes256-ctr
+	Ciphers chacha20-poly1305@openssh.com,aes256-ctr
 
 	#MACs
-	#MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
-	MACs hmac-sha2-512,hmac-sha2-256
+	MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
 
 	#Key Exchange Algorithms
-	#KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
-	KexAlgorithms ecdh-sha2-nistp521,ecdh-sha2-nistp384
+	KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
 
 
 	#Authentication Section:
@@ -423,8 +440,7 @@ misc_remove_extras() {
 	echo "##################################################"
 	echo "Removing Apache, Bind, Sendmail & Samba to reduce attack surface"
 
-	apt-get -y remove apache2 apache2-doc apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common \
-    bind9 bind9-host bind9utils libbind9-80 rpcbind samba samba-common
+	apt-get -y remove apache* bind9* samba*
 
 	return 0
 }
@@ -443,6 +459,7 @@ base_install() {
 	misc_remove_extras
 	config_misc_ipv6
 	config_misc_permissions
+	config_misc_postfix
 	config_misc_ssh
 	config_misc_unattended_upgrades
 
