@@ -190,32 +190,32 @@ config_misc_permissions() {
 	echo "Permissions Section"
 
 	echo "Change shells"
-	chsh -s /usr/sbin/false games
-	chsh -s /usr/sbin/false games
-	chsh -s /usr/sbin/false nobody
-	chsh -s /usr/sbin/false proxy
-	chsh -s /usr/sbin/false www-data
-	chsh -s /usr/sbin/false gnats
-	chsh -s /usr/sbin/false irc
-	chsh -s /usr/sbin/false uucp
-	chsh -s /usr/sbin/false mail
-	chsh -s /usr/sbin/false lp
-	chsh -s /usr/sbin/false man
-	chsh -s /usr/sbin/false sync
-	chsh -s /usr/sbin/false sys
-	chsh -s /usr/sbin/false bin
-	chsh -s /usr/sbin/false news
-	chsh -s /usr/sbin/false list
-	chsh -s /usr/sbin/false backup
-	chsh -s /usr/sbin/false daemon
-	chsh -s /usr/sbin/false systemd-timesync
-	chsh -s /usr/sbin/false systemd-network
-	chsh -s /usr/sbin/false systemd-resolve
-	chsh -s /usr/sbin/false systemd-bus-proxy
-	chsh -s /usr/sbin/false uuidd
-	chsh -s /usr/sbin/false postfix
-	chsh -s /usr/sbin/false bind
-	chsh -s /usr/sbin/false fetchmail
+	chsh -s /bin/false games
+	chsh -s /bin/false games
+	chsh -s /bin/false nobody
+	chsh -s /bin/false proxy
+	chsh -s /bin/false www-data
+	chsh -s /bin/false gnats
+	chsh -s /bin/false irc
+	chsh -s /bin/false uucp
+	chsh -s /bin/false mail
+	chsh -s /bin/false lp
+	chsh -s /bin/false man
+	chsh -s /bin/false sync
+	chsh -s /bin/false sys
+	chsh -s /bin/false bin
+	chsh -s /bin/false news
+	chsh -s /bin/false list
+	chsh -s /bin/false backup
+	chsh -s /bin/false daemon
+	chsh -s /bin/false systemd-timesync
+	chsh -s /bin/false systemd-network
+	chsh -s /bin/false systemd-resolve
+	chsh -s /bin/false systemd-bus-proxy
+	chsh -s /bin/false uuidd
+	chsh -s /bin/false postfix
+	chsh -s /bin/false bind
+	chsh -s /bin/false fetchmail
 
 	echo "Chmod common commands"
 
@@ -398,7 +398,9 @@ EOF
 
 	echo "##################################################"
 	echo "Removing other keys"
-	ls /etc/ssh | egrep -iv "moduli|config|ed25519" | xargs rm -rf
+	rm -rf /etc/ssh/ssh_host_*dsa*
+	rm -rf /etc/ssh/ssh_host_r*
+	rm -rf /etc/ssh/ssh_host_key*
 
 	echo "##################################################"
 	echo "Restarting SSH"
@@ -441,9 +443,9 @@ misc_pull_repos() {
 misc_remove_extras() {
 
 	echo "##################################################"
-	echo "Removing Apache, Bind, Sendmail & Samba to reduce attack surface"
+	echo "Removing Apache, Bind, Sendmail & Samba"
 
-	apt-get -y remove apache* bind9* samba*
+	apt-get -y purge apache* bind9* samba*
 
 	return 0
 }
