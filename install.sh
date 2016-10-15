@@ -3,8 +3,7 @@
 ### 
 # Script scope:
 # 1. Harden the config of a traditional Debian (VPS) install.
-#	* Using the lug.mtu.edu repo for authenticated and encrypted communication (TLSv1.2, AES-GCM).
-#		* https://www.ssllabs.com/ssltest/analyze.html?d=lug.mtu.edu&latest
+#	* Use a repo that supports TLS (TLSv1.2+, AES-GCM).
 #	* Recommendations for a more secure baseline configuration.
 #	* It is highly advised that you regen SSH keys (See instructions below).
 #
@@ -29,7 +28,7 @@
 # The MIT License (MIT)
 # Copyright (c) 2015 Theodore Rambert
 #
-# Revised 5/14/2016
+# Revised 10/15/2016
 #
 ###
 
@@ -40,6 +39,13 @@ PREFIX=0000
 #SSH_PUB_KEY="ssh-rsa ..."
 SSH_PORT=22
 NICKNAME=`echo $PREFIX$HOSTNAME|sed 's/-//g'`
+BASE_SOFTWARE="apt-transport-https unattended-upgrades vim vnstat"
+TOR_MIRROR="https://deb.torproject.org/torproject.org"
+TOR_MIRROR_KEY="886DDD89"
+TOR_MIRROR_KEY_FINGERPRINT="A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89"
+HTTP_MIRROR="http://mirror.steadfast.net/debian/"
+HTTPS_MIRROR="https://mirrors.ocf.berkeley.edu/debian/"
+PKGS_TO_RM="apache* bind9* samba*"
 
 
 server_update() {
@@ -60,7 +66,7 @@ server_install_base_packages() {
 
 	server_update
 
-	apt-get -y install apt-transport-https unattended-upgrades vim vnstat
+	apt-get -y install $BASE_SOFTWARE 
 
 	return 0
 }
@@ -71,15 +77,15 @@ server_install_tor_packages() {
 	echo "Add Tor repository"
 
 	cat <<-EOF >> /etc/apt/sources.list
-	deb https://deb.torproject.org/torproject.org $DEBIAN_VERSION main
-	deb https://deb.torproject.org/torproject.org obfs4proxy main
+	deb $TOR_MIRROR $DEBIAN_VERSION main
+	deb $TOR_MIRROR obfs4proxy main
 EOF
 
 	echo "##################################################"
 	echo "Retrieve Tor GPG Keys & Install Tor"
 
-	gpg --keyserver keys.gnupg.net --recv 886DDD89
-	gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
+	gpg --keyserver keys.gnupg.net --recv $TOR_MIRROR_KEY 
+	gpg --export $TOR_MIRROR_KEY_FINGERPRINT | apt-key add -
 	
 	server_update
 
@@ -119,8 +125,8 @@ config_add_repos() {
 
 	cat <<-EOF > /etc/apt/sources.list
 	# Debian packages for $DEBIAN_VERSION
-	deb http://lug.mtu.edu/debian/ $DEBIAN_VERSION main
-	deb http://lug.mtu.edu/debian/ $DEBIAN_VERSION-updates main
+	deb $HTTP_MIRROR $DEBIAN_VERSION main
+	deb $HTTP_MIRROR $DEBIAN_VERSION-updates main
 	# Security updates for $DEBIAN_VERSION
 	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
@@ -142,8 +148,8 @@ config_add_repos_https() {
 
 	cat <<-EOF > /etc/apt/sources.list
 	# Debian packages for $DEBIAN_VERSION
-	deb https://lug.mtu.edu/debian/ $DEBIAN_VERSION main
-	deb https://lug.mtu.edu/debian/ $DEBIAN_VERSION-updates main
+	deb $HTTPS_MIRROR $DEBIAN_VERSION main
+	deb $HTTPS_MIRROR $DEBIAN_VERSION-updates main
 	# Security updates for $DEBIAN_VERSION
 	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
@@ -445,7 +451,7 @@ misc_remove_extras() {
 	echo "##################################################"
 	echo "Removing Apache, Bind, Sendmail & Samba"
 
-	apt-get -y purge apache* bind9* samba*
+	apt-get -y purge $PKGS_TO_RM 
 
 	return 0
 }
