@@ -13,10 +13,6 @@
 # 3. Optionally install and autoconfigure Tor to run as an Obfs[3|4]proxy Bridge.
 #
 #
-# Generate & Verify a host's RSA keypair
-#	ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key
-#	ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
-#
 # Generate & Verify a host's ed25519 keypair
 #	ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key
 #	ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
@@ -27,7 +23,7 @@
 # Project site: https://github.com/theodorerambert/obfuscated-tor-bridge
 #
 # The MIT License (MIT)
-# Copyright (c) 2015 Theodore Rambert
+# Copyright (c) 2017 Theodore Rambert
 #
 # Revised 12/29/2017
 #
@@ -307,13 +303,13 @@ EOF
 	LogLevel INFO
 
 	#Ciphers
-	Ciphers chacha20-poly1305@openssh.com,aes256-ctr
+	Ciphers chacha20-poly1305@openssh.com
 
 	#MACs
-	MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+	MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
 
 	#Key Exchange Algorithms
-	KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521
+	KexAlgorithms curve25519-sha256@libssh.org
 
 
 	#Authentication Section:
@@ -331,8 +327,8 @@ EOF
 
 	#Allows only these users to connect
 	$ALLOWUSERS
-	#Number of authentications attempts per connection
-	MaxAuthTries 1
+	#Number of authentications attempts per connection, increase to allow trying multiple key types
+	MaxAuthTries 3
 	#Number of open sessions per connection
 	MaxSessions 1
 
