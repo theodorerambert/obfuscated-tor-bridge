@@ -3,7 +3,8 @@
 ### 
 # Script scope:
 # 1. Harden the config of a traditional Debian (VPS) install.
-#	* Use a repo that supports TLS (TLSv1.2+, AES-GCM).
+#	* Using the lug.mtu.edu repo over https.
+#		* https://www.ssllabs.com/ssltest/analyze.html?d=lug.mtu.edu&latest
 #	* Recommendations for a more secure baseline configuration.
 #	* It is highly advised that you regen SSH keys (See instructions below).
 #
@@ -28,24 +29,26 @@
 # The MIT License (MIT)
 # Copyright (c) 2015 Theodore Rambert
 #
-# Revised 10/15/2016
+# Revised 12/29/2017
 #
 ###
 
 
 DEBIAN_VERSION=jessie
-PREFIX=0000
-#ALLOWUSERS="AllowUsers root@*.*.*.*"
-#SSH_PUB_KEY="ssh-rsa ..."
-SSH_PORT=22
+PREFIX=00000
+ALLOWUSERS="AllowUsers root@*.*.*.*"
+SSH_PUB_KEY="ssh-rsa ..."
+SSH_PORT=922
 NICKNAME=`echo $PREFIX$HOSTNAME|sed 's/-//g'`
-BASE_SOFTWARE="apt-transport-https unattended-upgrades vim vnstat"
-TOR_MIRROR="https://deb.torproject.org/torproject.org"
-TOR_MIRROR_KEY="886DDD89"
-TOR_MIRROR_KEY_FINGERPRINT="A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89"
-HTTP_MIRROR="http://mirror.steadfast.net/debian/"
-HTTPS_MIRROR="https://mirrors.ocf.berkeley.edu/debian/"
+PKGS_BASE="apt-transport-https unattended-upgrades vim vnstat"
+APT_TOR_MIRROR="https://deb.torproject.org/torproject.org"
+APT_TOR_MIRROR_KEY_FINGERPRINT=A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89
+APT_MIRROR_HTTP="http://lug.mtu.edu/debian/"
+APT_MIRROR_HTTPS="https://lug.mtu.edu/debian/"
 PKGS_TO_RM="apache* bind9* samba*"
+PKGS_TOR="deb.torproject.org-keyring tor obfs4proxy"
+
+
 
 
 server_update() {
@@ -66,7 +69,7 @@ server_install_base_packages() {
 
 	server_update
 
-	apt-get -y install $BASE_SOFTWARE 
+	apt-get -y install $PKGS_BASE
 
 	return 0
 }
@@ -77,19 +80,19 @@ server_install_tor_packages() {
 	echo "Add Tor repository"
 
 	cat <<-EOF >> /etc/apt/sources.list
-	deb $TOR_MIRROR $DEBIAN_VERSION main
-	deb $TOR_MIRROR obfs4proxy main
+	deb $APT_TOR_MIRROR $DEBIAN_VERSION main
+	deb $APT_TOR_MIRROR obfs4proxy main
 EOF
 
 	echo "##################################################"
 	echo "Retrieve Tor GPG Keys & Install Tor"
 
-	gpg --keyserver keys.gnupg.net --recv $TOR_MIRROR_KEY 
-	gpg --export $TOR_MIRROR_KEY_FINGERPRINT | apt-key add -
+    	gpg --keyserver keys.gnupg.net --recv $APT_TOR_MIRROR_KEY_FINGERPRINT
+	gpg --export $APT_TOR_MIRROR_KEY_FINGERPRINT | apt-key add -
 	
 	server_update
 
-	apt-get -y install deb.torproject.org-keyring tor obfs4proxy
+	apt-get -y install $PKGS_TOR
 
 	echo "##################################################"
 	echo "Configuring Tor"
@@ -104,8 +107,8 @@ EOF
 	Nickname $NICKNAME
 	ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
 	ExtORPort auto
-	BandwidthRate 512 KB
-	BandwidthBurst 1024 KB
+	BandwidthRate 2048 KB
+	BandwidthBurst 4192 KB
 EOF
 
 
@@ -125,8 +128,8 @@ config_add_repos() {
 
 	cat <<-EOF > /etc/apt/sources.list
 	# Debian packages for $DEBIAN_VERSION
-	deb $HTTP_MIRROR $DEBIAN_VERSION main
-	deb $HTTP_MIRROR $DEBIAN_VERSION-updates main
+	deb $APT_MIRROR_HTTP $DEBIAN_VERSION main
+	deb $APT_MIRROR_HTTP $DEBIAN_VERSION-updates main
 	# Security updates for $DEBIAN_VERSION
 	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
@@ -148,8 +151,8 @@ config_add_repos_https() {
 
 	cat <<-EOF > /etc/apt/sources.list
 	# Debian packages for $DEBIAN_VERSION
-	deb $HTTPS_MIRROR $DEBIAN_VERSION main
-	deb $HTTPS_MIRROR $DEBIAN_VERSION-updates main
+	deb $APT_MIRROR_HTTPS $DEBIAN_VERSION main
+	deb $APT_MIRROR_HTTPS $DEBIAN_VERSION-updates main
 	# Security updates for $DEBIAN_VERSION
 	deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
@@ -423,7 +426,7 @@ config_misc_unattended_upgrades() {
 	APT::Periodic::Download-Upgradeable-Packages "1";
 	APT::Periodic::Unattended-Upgrade "1";
 	APT::Periodic::Update-Package-Lists "1";
-    APT::Periodic::Enable "1";
+	APT::Periodic::Enable "1";
 EOF
 
         cat <<-EOF > /etc/apt/apt.conf.d/00https
@@ -431,6 +434,8 @@ EOF
         Acquire::https::SslForceVersion "TLSv1.2";
 EOF
 
+	#Create apt file if it doesn't exist
+	touch /etc/cron.daily/apt
         chmod +x /etc/cron.daily/apt
 
         return 0
@@ -451,7 +456,7 @@ misc_remove_extras() {
 	echo "##################################################"
 	echo "Removing Apache, Bind, Sendmail & Samba"
 
-	apt-get -y purge $PKGS_TO_RM 
+	apt-get -y purge $PKGS_TO_RM
 
 	return 0
 }
