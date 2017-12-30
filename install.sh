@@ -45,8 +45,6 @@ PKGS_TO_RM="apache* bind9* samba*"
 PKGS_TOR="deb.torproject.org-keyring tor obfs4proxy"
 
 
-
-
 server_update() {
 
 	echo "##################################################"
@@ -295,7 +293,7 @@ EOF
 	#HostKeys for protocol version 2
 	HostKey /etc/ssh/ssh_host_ed25519_key
 
-	#Privilege Separation is turned on for security
+	#Turn on Privilege Separation for security
 	UsePrivilegeSeparation yes
 
 	#Logging
@@ -425,26 +423,26 @@ config_misc_unattended_upgrades() {
 	APT::Periodic::Enable "1";
 EOF
 
-        cat <<-EOF > /etc/apt/apt.conf.d/00https
-        Acquire::https::Verify-Host "true";
-        Acquire::https::SslForceVersion "TLSv1.2";
+    cat <<-EOF > /etc/apt/apt.conf.d/00https
+    Acquire::https::Verify-Host "true";
+    Acquire::https::SslForceVersion "TLSv1.2";
 EOF
 
 	#Create apt file if it doesn't exist
 	touch /etc/cron.daily/apt
-        chmod +x /etc/cron.daily/apt
+    chmod +x /etc/cron.daily/apt
 
-        return 0
+    return 0
 }
 
 misc_pull_repos() {
 
-        echo "##################################################"
-        echo "Refresh Repos"
+    echo "##################################################"
+    echo "Refresh Repos"
 
-        apt-get update
+    apt-get update
 
-        return 0
+    return 0
 }
 
 misc_remove_extras() {
