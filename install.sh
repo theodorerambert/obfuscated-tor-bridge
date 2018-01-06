@@ -152,7 +152,7 @@ deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
 
     return 0
-
+}
 
 config_mandatory() {
 
