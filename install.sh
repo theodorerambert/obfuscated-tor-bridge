@@ -74,8 +74,8 @@ server_install_tor_packages() {
     echo "Add Tor repository"
 
     cat <<-EOF >> /etc/apt/sources.list
-    deb $APT_TOR_MIRROR $DEBIAN_VERSION main
-    deb $APT_TOR_MIRROR obfs4proxy main
+deb $APT_TOR_MIRROR $DEBIAN_VERSION main
+deb $APT_TOR_MIRROR obfs4proxy main
 EOF
 
     echo "##################################################"
@@ -94,15 +94,15 @@ EOF
     cp -a /etc/tor/torrc /etc/tor/torrc.orig
 
     cat <<-EOF > /etc/tor/torrc
-    SocksPort 0
-    ORPort 443
-    BridgeRelay 1
-    Exitpolicy reject *:*
-    Nickname $NICKNAME
-    ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
-    ExtORPort auto
-    BandwidthRate 2048 KB
-    BandwidthBurst 4192 KB
+SocksPort 0
+ORPort 443
+BridgeRelay 1
+Exitpolicy reject *:*
+Nickname $NICKNAME
+ServerTransportPlugin obfs3,obfs4 exec /usr/bin/obfs4proxy
+ExtORPort auto
+BandwidthRate 2048 KB
+BandwidthBurst 4192 KB
 EOF
 
 
@@ -121,16 +121,16 @@ config_add_repos() {
     cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
     cat <<-EOF > /etc/apt/sources.list
-    # Debian packages for $DEBIAN_VERSION
-    deb $APT_MIRROR_HTTP $DEBIAN_VERSION main
-    deb $APT_MIRROR_HTTP $DEBIAN_VERSION-updates main
-    # Security updates for $DEBIAN_VERSION
-    deb http://security.debian.org/ $DEBIAN_VERSION/updates main
+# Debian packages for $DEBIAN_VERSION
+deb $APT_MIRROR_HTTP $DEBIAN_VERSION main
+deb $APT_MIRROR_HTTP $DEBIAN_VERSION-updates main
+# Security updates for $DEBIAN_VERSION
+deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
 
     cat <<-EOF > /etc/apt/apt.conf.d/00aptitude
-    #Ignore translations
-    Acquire::Languages "none";
+#Ignore translations
+Acquire::Languages "none";
 EOF
 
     return 0
@@ -144,15 +144,15 @@ config_add_repos_https() {
     cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
     cat <<-EOF > /etc/apt/sources.list
-    # Debian packages for $DEBIAN_VERSION
-    deb $APT_MIRROR_HTTPS $DEBIAN_VERSION main
-    deb $APT_MIRROR_HTTPS $DEBIAN_VERSION-updates main
-    # Security updates for $DEBIAN_VERSION
-    deb http://security.debian.org/ $DEBIAN_VERSION/updates main
+# Debian packages for $DEBIAN_VERSION
+deb $APT_MIRROR_HTTPS $DEBIAN_VERSION main
+deb $APT_MIRROR_HTTPS $DEBIAN_VERSION-updates main
+# Security updates for $DEBIAN_VERSION
+deb http://security.debian.org/ $DEBIAN_VERSION/updates main
 EOF
 
     return 0
-}
+
 
 config_mandatory() {
 
@@ -160,7 +160,7 @@ config_mandatory() {
     echo "Fixing locale issue"
 
     cat <<-EOF >> /etc/locale.gen
-    en_US.UTF-8 UTF-8
+en_US.UTF-8 UTF-8
 EOF
 
     locale-gen
@@ -169,7 +169,7 @@ EOF
     echo "Setting Timezone"
 
     cat <<-EOF > /etc/timezone
-    America/New_York
+America/New_York
 EOF
 
     return 0
@@ -181,7 +181,7 @@ config_misc_ipv6() {
     echo "Disable IPv6"
 
     cat <<-EOF > /etc/sysctl.d/disableipv6.conf
-    net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.all.disable_ipv6=1
 EOF
 
     return 0
@@ -266,11 +266,11 @@ config_misc_ssh() {
     echo "Adding SSH Banner"
 
     cat <<-EOF > /etc/issue.net
-    *************************************************************
-    This service is restricted to authorized users only.
-    All activities on this system are logged. Unauthorized
-    access will be investigated and reported to law enforcement.
-    *************************************************************
+*************************************************************
+This service is restricted to authorized users only.
+All activities on this system are logged. Unauthorized
+access will be investigated and reported to law enforcement.
+*************************************************************
 EOF
 
     echo "##################################################"
@@ -283,120 +283,120 @@ EOF
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
 
     cat <<-EOF > /etc/ssh/sshd_config
-    #IP, Port, Crypto, Logging Section:
-    Port $SSH_PORT
-    AddressFamily inet
+#IP, Port, Crypto, Logging Section:
+Port $SSH_PORT
+AddressFamily inet
 
-    #ListenAddress 0.0.0.0
-    Protocol 2
+#ListenAddress 0.0.0.0
+Protocol 2
 
-    #HostKeys for protocol version 2
-    HostKey /etc/ssh/ssh_host_ed25519_key
+#HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_ed25519_key
 
-    #Turn on Privilege Separation for security
-    UsePrivilegeSeparation yes
+#Turn on Privilege Separation for security
+UsePrivilegeSeparation yes
 
-    #Logging
-    SyslogFacility AUTH
-    LogLevel INFO
+#Logging
+SyslogFacility AUTH
+LogLevel INFO
 
-    #Ciphers
-    Ciphers chacha20-poly1305@openssh.com
+#Ciphers
+Ciphers chacha20-poly1305@openssh.com
 
-    #MACs
-    MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+#MACs
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
 
-    #Key Exchange Algorithms
-    KexAlgorithms curve25519-sha256@libssh.org
-
-
-    #Authentication Section:
-    #Enable PAM authentication (non key authentication)
-    UsePAM no
-    #The server disconnects after this time if the user has not successfully logged in.
-    LoginGraceTime 120
-    #Permits root login
-    PermitRootLogin yes
-    #Permits root login only with a key
-    PermitRootLogin without-password
-
-    #Checks ownership of the user's files and home directory before accepting login.
-    StrictModes yes
-
-    #Allows only these users to connect
-    $ALLOWUSERS
-    #Number of authentications attempts per connection, increase to allow trying multiple key types
-    MaxAuthTries 3
-    #Number of open sessions per connection
-    MaxSessions 1
-
-    #(start:rate:full)
-    MaxStartups 1:100:1
-
-    #Password Section
-    PermitEmptyPasswords no
-
-    #Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
-    ChallengeResponseAuthentication no
-
-    #Change to no to disable tunneled clear text passwords
-    PasswordAuthentication yes
+#Key Exchange Algorithms
+KexAlgorithms curve25519-sha256@libssh.org
 
 
-    #Key Authentication Section:
-    #Version 1 only
-    RSAAuthentication no
-    #Version 2
-    PubkeyAuthentication yes
+#Authentication Section:
+#Enable PAM authentication (non key authentication)
+UsePAM no
+#The server disconnects after this time if the user has not successfully logged in.
+LoginGraceTime 120
+#Permits root login
+PermitRootLogin yes
+#Permits root login only with a key
+PermitRootLogin without-password
 
-    #Don't read the user's ~/.rhosts and ~/.shosts files
-    IgnoreRhosts yes
-    #For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
-    RhostsRSAAuthentication no
-    #Similar for protocol version 2
-    HostbasedAuthentication no
-    #Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
-    IgnoreUserKnownHosts yes
+#Checks ownership of the user's files and home directory before accepting login.
+StrictModes yes
+
+#Allows only these users to connect
+$ALLOWUSERS
+#Number of authentications attempts per connection, increase to allow trying multiple key types
+MaxAuthTries 3
+#Number of open sessions per connection
+MaxSessions 1
+
+#(start:rate:full)
+MaxStartups 1:100:1
+
+#Password Section
+PermitEmptyPasswords no
+
+#Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
+ChallengeResponseAuthentication no
+
+#Change to no to disable tunneled clear text passwords
+PasswordAuthentication yes
 
 
-    #Other Authentication Options:
-    KerberosAuthentication no
-    GSSAPIAuthentication no
+#Key Authentication Section:
+#Version 1 only
+RSAAuthentication no
+#Version 2
+PubkeyAuthentication yes
+
+#Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+#For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
+RhostsRSAAuthentication no
+#Similar for protocol version 2
+HostbasedAuthentication no
+#Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+IgnoreUserKnownHosts yes
 
 
-    #Further Restrictions Section:
-    #Timeout interval, requests data from client
-    ClientAliveInterval 5
-    ClientAliveCountMax 3
-    
-    X11Forwarding no
-    AllowAgentForwarding no
-    PrintMotd no
-    PrintLastLog yes
-    #Device forwarding
-    PermitTunnel no
+#Other Authentication Options:
+KerberosAuthentication no
+GSSAPIAuthentication no
 
-    #Compression
-    Compression no
 
-    #chroot directory
-    ChrootDirectory none
+#Further Restrictions Section:
+#Timeout interval, requests data from client
+ClientAliveInterval 5
+ClientAliveCountMax 3
 
-    #send TCP keepalive messages to the other side (spoofable)
-    TCPKeepAlive no
-    #Command never used for remote sessions
-    UseLogin no
+X11Forwarding no
+AllowAgentForwarding no
+PrintMotd no
+PrintLastLog yes
+#Device forwarding
+PermitTunnel no
 
-    Banner /etc/issue.net
+#Compression
+Compression no
 
-    Subsystem sftp /usr/lib/openssh/sftp-server
+#chroot directory
+ChrootDirectory none
+
+#send TCP keepalive messages to the other side (spoofable)
+TCPKeepAlive no
+#Command never used for remote sessions
+UseLogin no
+
+Banner /etc/issue.net
+
+Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
     echo "##################################################"
     echo "Adding Pub Key"
     mkdir -p ~/.ssh
     cat <<-EOF >> ~/.ssh/authorized_keys
-    $SSH_PUB_KEY
+$SSH_PUB_KEY
 EOF
 
     echo "##################################################"
@@ -417,15 +417,15 @@ config_misc_unattended_upgrades() {
     echo "##################################################"
     echo "Configuring Unattended Upgrades"
     cat <<-EOF > /etc/apt/apt.conf.d/02periodic
-    APT::Periodic::Download-Upgradeable-Packages "1";
-    APT::Periodic::Unattended-Upgrade "1";
-    APT::Periodic::Update-Package-Lists "1";
-    APT::Periodic::Enable "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Enable "1";
 EOF
 
     cat <<-EOF > /etc/apt/apt.conf.d/00https
-    Acquire::https::Verify-Host "true";
-    Acquire::https::SslForceVersion "TLSv1.2";
+Acquire::https::Verify-Host "true";
+Acquire::https::SslForceVersion "TLSv1.2";
 EOF
 
     #Create apt file if it doesn't exist
