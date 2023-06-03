@@ -1,22 +1,24 @@
 # obfuscated-tor-bridge
-Quick script to setup an obfuscated tor bridge
+Bash script to setup an obfuscated Tor bridge
 
-####Summary
-  * Installs & Configures an obfuscated Tor Bridge
-  * Sets up automatic updates
-  * Misc Config settings for a VPS provider
+### Summary
+  * Setup and configure Linux with minor changes, including monthly traffic limit
+  * Setup automatic updates
+  * Install and auto configure Tor to run as an Obfs4proxy Bridge
   
-  ####Variables
-   * VERSION (Script tested only with Debian 8 (Jessie), incompatible with Wheezy)
-   * PREFIX (used to identify the status of your bridges using atlas)
+## Customize these Variables
+   * VERSION (Script tested with Debian 11 (Buster)
+   * PREFIX (combined with hostname). Used to identify the status of your bridge. Might have to use the hashed fingerprint instead.
      * see: https://atlas.torproject.org
-   * ALLOWUSERS: variable for restricting SSH access to a user and/or an IP address
+   * ALLOWUSERS: Restrict SSH access per user and/or IP address
    * SSH_PUB_KEY: Add your pub key here
-    * Note: You can always check the syntax of a bash script using `bash -n`
+   * SSH_PORT: Alternative SSH Port
+   * Note: Check the syntax using `bash -n`
 
-  ####Examples
-     * VERSION=jessie
-     * PREFIX=0000
-     * ALLOWUSERS="AllowUsers root@*.*.*.*"
-     * SSH_PUB_KEY="ssh-rsa ..."
-     * SSH_PORT=822
+### Examples
+     * LINUX_VERSION=bullseye
+     * PREFIX=00000
+     * ALLOWUSERS="AllowUsers root@1.1.1.1"
+     * ALLOWUSERS="AllowUsers root@X.X.0.0/16" #Or from a specific network
+     * SSH_PUB_KEY="ssh-ed25519 ..."
+     * SSH_PORT=922
