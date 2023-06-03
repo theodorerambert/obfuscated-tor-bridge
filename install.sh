@@ -67,8 +67,8 @@ server_install_tor_packages() {
     echo "Add Tor repository"
 
     cat <<-EOF >> /etc/apt/sources.list.d/tor.list
-    deb [signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org $LINUX_VERSION main
-    deb-src [signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org $LINUX_VERSION main
+deb [signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org $LINUX_VERSION main
+deb-src [signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org $LINUX_VERSION main
 EOF
 
     echo "##################################################"
@@ -84,9 +84,6 @@ EOF
 
     wget -qO- https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc | gpg --dearmor | tee /usr/share/keyrings/tor-archive-keyring.gpg >/dev/null
 
-    #gpg --keyserver keys.gnupg.net --recv $APT_TOR_MIRROR_KEY_FINGERPRINT
-    #gpg --export $APT_TOR_MIRROR_KEY_FINGERPRINT | apt-key add -
-    
     server_update
 
     apt-get -y install $PKGS_TOR
@@ -100,19 +97,19 @@ EOF
     cp -a /etc/tor/torrc /etc/tor/torrc.orig
 
     cat <<-EOF > /etc/tor/torrc
-    BridgeRelay 1
-    ORPort 80 IPv4Only
-    ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy
-    ServerTransportListenAddr obfs4 0.0.0.0:443
-    ExtORPort auto
-    Exitpolicy reject *:*
-    Nickname $NICKNAME
+BridgeRelay 1
+ORPort 80 IPv4Only
+ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy
+ServerTransportListenAddr obfs4 0.0.0.0:443
+ExtORPort auto
+Exitpolicy reject *:*
+Nickname $NICKNAME
 
-    #AccountingStart week 1 12:00
-    #AccountingMax 240 GBytes
+#AccountingStart week 1 12:00
+#AccountingMax 240 GBytes
 EOF
 
-    #Additional permissions for tor below 1024
+    #Additional permissions for Tor below port 1024
     setcap cap_net_bind_service=+ep /usr/bin/obfs4proxy
 
     echo "##################################################"
@@ -138,11 +135,11 @@ config_add_repos() {
     cp /etc/apt/sources.list /etc/apt/sources.list.orig
 
     cat <<-EOF > /etc/apt/sources.list
-    # Debian packages for $LINUX_VERSION
-    deb $APT_MIRROR_HTTP $LINUX_VERSION main
-    deb $APT_MIRROR_HTTP $LINUX_VERSION-updates main
-    # Security updates for $LINUX_VERSION
-    deb http://security.debian.org/ $LINUX_VERSION/updates main
+# Debian packages for $LINUX_VERSION
+deb $APT_MIRROR_HTTP $LINUX_VERSION main
+deb $APT_MIRROR_HTTP $LINUX_VERSION-updates main
+# Security updates for $LINUX_VERSION
+deb http://security.debian.org/ $LINUX_VERSION/updates main
 EOF
 
     cat <<-EOF > /etc/apt/apt.conf.d/00aptitude
@@ -268,113 +265,111 @@ EOF
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
 
     cat <<-EOF > /etc/ssh/sshd_config
-    #IP, Port, Crypto, Logging Section:
-    Port 922
-    AddressFamily inet
+#Base Configuration Section:
+Port $SSH_PORT
+AddressFamily inet
 
-    #ListenAddress 0.0.0.0
-    Protocol 2
+#ListenAddress 0.0.0.0
+Protocol 2
 
-    #HostKeys for protocol version 2
-    HostKey /etc/ssh/ssh_host_ed25519_key
+#HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_ed25519_key
 
-    #Logging
-    SyslogFacility AUTH
-    LogLevel INFO
+#Logging
+SyslogFacility AUTH
+LogLevel INFO
 
-    #Ciphers
-    Ciphers chacha20-poly1305@openssh.com
+#Ciphers
+Ciphers chacha20-poly1305@openssh.com
 
-    #MACs
-    MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+#MACs
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
 
-    #Key Exchange Algorithms
-    KexAlgorithms curve25519-sha256@libssh.org
+#Key Exchange Algorithms
+KexAlgorithms curve25519-sha256@libssh.org
 
+#Authentication Section:
+#Enable PAM authentication (non key authentication)
+UsePAM no
+#The server disconnects after this time if the user has not successfully logged in.
+LoginGraceTime 120
+#Permits root login
+PermitRootLogin yes
+#Permits root login only with a key
+PermitRootLogin without-password
 
-    #Authentication Section:
-    #Enable PAM authentication (non key authentication)
-    UsePAM no
-    #The server disconnects after this time if the user has not successfully logged in.
-    LoginGraceTime 120
-    #Permits root login
-    PermitRootLogin yes
-    #Permits root login only with a key
-    PermitRootLogin without-password
+#Checks ownership of the user's files and home directory before accepting login.
+StrictModes yes
 
-    #Checks ownership of the user's files and home directory before accepting login.
-    StrictModes yes
+#Allows only these users to connect
+$ALLOWUSERS
+#Number of authentications attempts per connection, increase to allow trying multiple key types
+MaxAuthTries 3
+#Number of open sessions per connection
+MaxSessions 1
 
-    #Allows only these users to connect
-    $ALLOWUSERS
-    #Number of authentications attempts per connection, increase to allow trying multiple key types
-    MaxAuthTries 3
-    #Number of open sessions per connection
-    MaxSessions 1
+#(start:rate:full)
+MaxStartups 1:100:1
 
-    #(start:rate:full)
-    MaxStartups 1:100:1
+#Password Section
+PermitEmptyPasswords no
 
-    #Password Section
-    PermitEmptyPasswords no
+#Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
+ChallengeResponseAuthentication no
 
-    #Change to yes to enable challenge-response passwords (beware issues with some PAM modules and threads)
-    ChallengeResponseAuthentication no
+#Change to no to disable tunneled clear text passwords
+PasswordAuthentication no
 
-    #Change to no to disable tunneled clear text passwords
-    PasswordAuthentication no
+#Key Authentication Section:
+#Version 2
+PubkeyAuthentication yes
 
+#Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+#For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
+#RhostsRSAAuthentication no
+#Similar for protocol version 2
+HostbasedAuthentication no
+#Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+IgnoreUserKnownHosts yes
 
-    #Key Authentication Section:
-    #Version 2
-    PubkeyAuthentication yes
+#Other Authentication Options:
+KerberosAuthentication no
+GSSAPIAuthentication no
 
-    #Don't read the user's ~/.rhosts and ~/.shosts files
-    IgnoreRhosts yes
-    #For this to work you will also need host keys in /etc/ssh_known_hosts(v1 only)
-    #RhostsRSAAuthentication no
-    #Similar for protocol version 2
-    HostbasedAuthentication no
-    #Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
-    IgnoreUserKnownHosts yes
-
-
-    #Other Authentication Options:
-    KerberosAuthentication no
-    GSSAPIAuthentication no
-
-
-    #Further Restrictions Section:
-    #Timeout interval, requests data from client
-    ClientAliveInterval 5
-    ClientAliveCountMax 3
+#Further Restrictions Section:
+#Timeout interval, requests data from client
+ClientAliveInterval 5
+ClientAliveCountMax 3
     
-    X11Forwarding no
-    AllowAgentForwarding no
-    PrintMotd no
-    PrintLastLog yes
-    #Device forwarding
-    PermitTunnel no
+X11Forwarding no
+AllowAgentForwarding no
+PrintMotd no
+PrintLastLog yes
+#Device forwarding
+PermitTunnel no
 
-    #Compression
-    Compression no
+#Compression
+Compression no
 
-    #chroot directory
-    ChrootDirectory none
+#chroot directory
+ChrootDirectory none
 
-    #send TCP keepalive messages to the other side (spoofable)
-    TCPKeepAlive no
+#send TCP keepalive messages to the other side (spoofable)
+TCPKeepAlive no
 
-    Banner /etc/issue.net
+Banner /etc/issue.net
 
-    Subsystem sftp /usr/lib/openssh/sftp-server
+Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
     echo "##################################################"
     echo "Adding Pub Key"
+
     mkdir -p ~/.ssh
+
     cat <<-EOF >> ~/.ssh/authorized_keys
-    $SSH_PUB_KEY
+$SSH_PUB_KEY
 EOF
 
     echo "##################################################"
@@ -433,9 +428,11 @@ base_install() {
     echo "##################################################"
     echo "Base Install Starting"
 
-    ufw disable 
+    echo "Disabling ufw"
+    ufw disable
+
     config_mandatory
-    
+
     #config_add_repos
     server_update
     server_install_base_packages
